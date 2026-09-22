@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản Test - Gym Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .account-card {
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        .account-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .admin-card { border-color: #dc3545; }
+        .trainer-card { border-color: #0d6efd; }
+        .member-card { border-color: #198754; }
+        .copy-btn {
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1>🔐 Tài khoản Test</h1>
+            <p class="text-muted">Gym Management System - Demo Accounts</p>
+            <a href="index.html" class="btn btn-primary">Đến trang đăng nhập →</a>
+        </div>
+
+        <!-- ADMIN -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="text-danger">👨‍💼 ADMIN (Quản trị viên)</h3>
+            </div>
+            <div class="col-md-6">
+                <div class="card account-card admin-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nguyễn Văn Admin</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="120"><strong>Username:</strong></td>
+                                <td>
+                                    <code id="admin-user">admin</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('admin-user')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td>
+                                    <code id="admin-pass">123456</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('admin-pass')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td><span class="badge bg-danger">ADMIN</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>admin@gym.local</td>
+                            </tr>
+                        </table>
+                        <div class="alert alert-info mb-0 small">
+                            <strong>Quyền hạn:</strong> Quản lý toàn bộ hệ thống, CRUD users, members, trainers, packages, classes, equipments
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRAINERS -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="text-primary">💪 TRAINER (Huấn luyện viên)</h3>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card account-card trainer-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Trần Minh Huấn</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="120"><strong>Username:</strong></td>
+                                <td>
+                                    <code id="trainer1-user">trainer1</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('trainer1-user')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td>
+                                    <code id="trainer1-pass">123456</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('trainer1-pass')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td><span class="badge bg-primary">TRAINER</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chuyên môn:</strong></td>
+                                <td>Strength Training</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Kinh nghiệm:</strong></td>
+                                <td>5 năm</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card account-card trainer-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Lê Thị Yoga</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="120"><strong>Username:</strong></td>
+                                <td>
+                                    <code id="trainer2-user">trainer2</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('trainer2-user')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td>
+                                    <code id="trainer2-pass">123456</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('trainer2-pass')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td><span class="badge bg-primary">TRAINER</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chuyên môn:</strong></td>
+                                <td>Yoga & Pilates</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Kinh nghiệm:</strong></td>
+                                <td>3 năm</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MEMBERS -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="text-success">🏃 MEMBER (Hội viên)</h3>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card account-card member-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Phạm Quốc Hội</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="120"><strong>Username:</strong></td>
+                                <td>
+                                    <code id="member1-user">member1</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('member1-user')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td>
+                                    <code id="member1-pass">123456</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('member1-pass')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td><span class="badge bg-success">MEMBER</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Giới tính:</strong></td>
+                                <td>Nam</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gói hiện tại:</strong></td>
+                                <td><span class="badge bg-success">Gói 12 tháng (ACTIVE)</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card account-card member-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Đỗ Thị Lan</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <td width="120"><strong>Username:</strong></td>
+                                <td>
+                                    <code id="member2-user">member2</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('member2-user')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td>
+                                    <code id="member2-pass">123456</code>
+                                    <button class="btn btn-sm btn-outline-secondary copy-btn" onclick="copy('member2-pass')">📋</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td><span class="badge bg-success">MEMBER</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Giới tính:</strong></td>
+                                <td>Nữ</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gói hiện tại:</strong></td>
+                                <td><span class="badge bg-success">Gói 3 tháng (ACTIVE)</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Info -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">📝 Thông tin quan trọng</h5>
+                        <ul>
+                            <li><strong>API Base URL:</strong> <code>http://localhost:8080/api2025</code></li>
+                            <li><strong>API Key:</strong> <code>SECRET_KEY_123</code> (header: X-API-KEY)</li>
+                            <li><strong>Frontend URL:</strong> <code>http://127.0.0.1:5500/client/index.html</code></li>
+                            <li><strong>Mật khẩu chung:</strong> <code>123456</code> (tất cả tài khoản)</li>
+                            <li><strong>Login endpoint:</strong> Không cần API Key</li>
+                            <li><strong>Các endpoint khác:</strong> Cần header X-API-KEY</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="index.html" class="btn btn-lg btn-primary">Bắt đầu đăng nhập →</a>
+        </div>
+    </div>
+
+    <script>
+        function copy(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Đã copy: ' + text);
+            });
+        }
+    </script>
+</body>
+</html>
