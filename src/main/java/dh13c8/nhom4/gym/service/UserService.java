@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import dh13c8.nhom4.gym.entity.User;
+import dh13c8.nhom4.gym.entity.AccountStatus;
 import dh13c8.nhom4.gym.repository.UserRepository;
 
 @Service
@@ -50,6 +51,9 @@ public class UserService {
         }
         if (userRepository.findByUsername(data.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
+        }
+        if (data.getStatus() == null) {
+            data.setStatus(AccountStatus.ACTIVE);
         }
         data.setId(null);
         return userRepository.save(data);

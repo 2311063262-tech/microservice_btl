@@ -37,6 +37,26 @@ public class MemberController {
         return ResponseEntity.ok(members);
     }
 
+    @GetMapping("/inactive")
+    public ResponseEntity<?> searchInactiveMembers(@RequestParam(required = false, defaultValue = "") String name,
+            @RequestParam String role, Pageable pageable) {
+        try {
+            return ResponseEntity.ok(memberService.searchInactiveMembers(name, pageable, role));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<?> restoreMember(@PathVariable Long id, @RequestParam String role) {
+        try {
+            return memberService.restoreMember(id, role) ? ResponseEntity.ok().build()
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Member not found");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
     /**
      * Lấy thông tin thành viên theo ID (ai cũng xem).
      */

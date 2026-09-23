@@ -2,8 +2,6 @@ package dh13c8.nhom4.gym.entity;
 
 import java.time.LocalDate;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,10 +25,9 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 1-1 với users; JsonBackReference tránh vòng lặp JSON khi serialize. */
+    /** 1-1 với users; trả kèm tên để giao diện hiển thị đúng hội viên. */
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
-    @JsonBackReference
     private User user;
 
     @Column(name = "dob")

@@ -32,6 +32,10 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private AccountStatus status = AccountStatus.ACTIVE;
+
     @Column(name = "full_name", length = 100)
     private String fullName;
 
@@ -108,5 +112,13 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
     }
 }

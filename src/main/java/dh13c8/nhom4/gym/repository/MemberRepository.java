@@ -12,7 +12,10 @@ import dh13c8.nhom4.gym.entity.Member;
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    @Query("SELECT m FROM Member m WHERE LOWER(m.user.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("SELECT m FROM Member m WHERE (m.user.status IS NULL OR m.user.status = 'ACTIVE') AND LOWER(m.user.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
     Page<Member> searchByName(@Param("name") String name, Pageable pageable);
+
+    @Query("SELECT m FROM Member m WHERE m.user.status = 'INACTIVE' AND LOWER(m.user.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
+    Page<Member> searchInactiveByName(@Param("name") String name, Pageable pageable);
 
 }

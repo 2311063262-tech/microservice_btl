@@ -81,7 +81,9 @@ public class ClassSessionService {
         }
 
         classSession.setName(sessionDetails.getName());
-        classSession.setTrainer(sessionDetails.getTrainer());
+        if (sessionDetails.getTrainer() != null) {
+            classSession.setTrainer(sessionDetails.getTrainer());
+        }
         classSession.setDayOfWeek(sessionDetails.getDayOfWeek());
         classSession.setStartTime(sessionDetails.getStartTime());
         classSession.setEndTime(sessionDetails.getEndTime());

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import dh13c8.nhom4.gym.entity.Member;
 import dh13c8.nhom4.gym.entity.User;
+import dh13c8.nhom4.gym.entity.AccountStatus;
 import dh13c8.nhom4.gym.repository.MemberRepository;
 import dh13c8.nhom4.gym.repository.UserRepository;
 
@@ -31,6 +32,11 @@ public class MemberService {
      */
     public Page<Member> searchMembers(String name, Pageable pageable) {
         return memberRepository.searchByName(name, pageable);
+    }
+
+    public Page<Member> searchInactiveMembers(String name, Pageable pageable, String role) {
+        userService.checkRole(role, "ADMIN");
+        return memberRepository.searchInactiveByName(name, pageable);
     }
 
     /**
@@ -91,9 +97,24 @@ public class MemberService {
         userService.checkRole(role, "ADMIN");
 
         if (memberRepository.existsById(id)) {
-            memberRepository.deleteById(id);
+            Member member = memberRepository.findById(id).orElseThrow();
+            if (member.getUser() != null) {
+                member.getUser().setStatus(AccountStatus.INACTIVE);
+                userRepository.save(member.getUser());
+            }
             return true;
         }
         return false;
+    }
+
+    public boolean restoreMember(Long id, String role) {
+        userService.checkRole(role, "ADMIN");
+        Member member = memberRepository.findById(id).orElse(null);
+        if (member == null || member.getUser() == null) {
+            return false;
+        }
+        member.getUser().setStatus(AccountStatus.ACTIVE);
+        userRepository.save(member.getUser());
+        return true;
     }
 }

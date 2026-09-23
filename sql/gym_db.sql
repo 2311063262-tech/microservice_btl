@@ -21,6 +21,7 @@ CREATE TABLE users (
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('ADMIN', 'TRAINER', 'MEMBER') NOT NULL,
+    status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
     full_name VARCHAR(100),
     email VARCHAR(100),
     phone VARCHAR(20)

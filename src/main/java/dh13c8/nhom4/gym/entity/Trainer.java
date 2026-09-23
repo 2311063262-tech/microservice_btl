@@ -1,7 +1,5 @@
 package dh13c8.nhom4.gym.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,10 +21,9 @@ public class Trainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 1-1 với users; JsonBackReference tránh vòng lặp JSON khi serialize. */
+    /** 1-1 với users; trả kèm thông tin tên HLV cho giao diện quản lý. */
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
-    @JsonBackReference
     private User user;
 
     @Column(name = "specialty", length = 100)
