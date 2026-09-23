@@ -1,67 +1,181 @@
 /**
- * Xử lý đăng nhập
+ * ==========================================
+ * GYM MANAGEMENT - LOGIN
+ * ==========================================
  */
 
-document.getElementById("loginForm").addEventListener("submit", async function(e) {
+const LOGIN_API = "http://localhost:8080/api2025/auth/login";
+
+const loginForm = document.getElementById("loginForm");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const errorDiv = document.getElementById("errorMessage");
+
+
+loginForm.addEventListener("submit", async function (e) {
+
     e.preventDefault();
-    
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value;
-    const errorDiv = document.getElementById("errorMessage");
-    
-    // Ẩn lỗi cũ
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    // Xóa thông báo cũ
     errorDiv.style.display = "none";
     errorDiv.textContent = "";
-    
+
+
+    // Kiểm tra tài khoản
+    if (username === "") {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = "Vui lòng nhập tên đăng nhập!";
+        usernameInput.focus();
+        return;
+    }
+
+
+    // Kiểm tra mật khẩu
+    if (password === "") {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = "Vui lòng nhập mật khẩu!";
+        passwordInput.focus();
+        return;
+    }
+
+
+    console.log("Đang đăng nhập...");
+    console.log("API:", LOGIN_API);
+    console.log("Username:", username);
+
+
     try {
-        // Gọi API login (KHÔNG cần X-API-KEY)
-        const response = await fetch(`${API_BASE}/auth/login`, {
+
+        const response = await fetch(LOGIN_API, {
+
             method: "POST",
+
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
+
             body: JSON.stringify({
                 username: username,
                 password: password
             })
+
         });
-        
+
+
+        console.log("HTTP Status:", response.status);
+
+
+        // =====================================
+        // ĐĂNG NHẬP THÀNH CÔNG
+        // =====================================
+
         if (response.ok) {
-            // Đăng nhập thành công
+
             const user = await response.json();
-            
-            // Lưu vào localStorage
-            localStorage.setItem("currentUser", JSON.stringify(user));
-            
-            // Điều hướng theo role
-            switch (user.role) {
-                case "ADMIN":
-                    window.location.href = "admin/dashboard.html";
-                    break;
-                case "TRAINER":
-                    window.location.href = "trainer/my-classes.html";
-                    break;
-                case "MEMBER":
-                    window.location.href = "member/my-info.html";
-                    break;
-                default:
-                    errorDiv.style.display = "block";
-                    errorDiv.textContent = "Role không hợp lệ!";
-            }
-        } else if (response.status === 401) {
-            // Sai tài khoản hoặc mật khẩu
-            errorDiv.style.display = "block";
-            errorDiv.textContent = "Sai tài khoản hoặc mật khẩu!";
-        } else {
-            // Lỗi khác
-            const errorText = await response.text();
-            errorDiv.style.display = "block";
-            errorDiv.textContent = errorText || "Đã xảy ra lỗi!";
+
+            console.log("ĐĂNG NHẬP THÀNH CÔNG!");
+            console.log("User:", user);
+            console.log("Role:", user.role);
+
+
+            // Lưu thông tin người đăng nhập
+            localStorage.setItem(
+                "currentUser",
+                JSON.stringify(user)
+            );
+
+
+            // app.js listens for this event and opens the dashboard in-place.
+            window.dispatchEvent(new CustomEvent("gym:login", { detail: user }));
+            return;
         }
-    } catch (error) {
-        // Lỗi mạng
-        console.error("Login error:", error);
+
+
+        // =====================================
+        // SAI TÀI KHOẢN / MẬT KHẨU
+        // =====================================
+
+        if (response.status === 401) {
+
+            errorDiv.style.display = "block";
+
+            errorDiv.textContent =
+                "Sai tài khoản hoặc mật khẩu!";
+
+            return;
+        }
+
+
+        // =====================================
+        // KHÔNG TÌM THẤY API
+        // =====================================
+
+        if (response.status === 404) {
+
+            errorDiv.style.display = "block";
+
+            errorDiv.textContent =
+                "Không tìm thấy API đăng nhập!";
+
+            return;
+        }
+
+
+        // =====================================
+        // FORBIDDEN
+        // =====================================
+
+        if (response.status === 403) {
+
+            errorDiv.style.display = "block";
+
+            errorDiv.textContent =
+                "Server từ chối yêu cầu (403)!";
+
+            return;
+        }
+
+
+        // =====================================
+        // LỖI SERVER
+        // =====================================
+
+        if (response.status >= 500) {
+
+            errorDiv.style.display = "block";
+
+            errorDiv.textContent =
+                "Server đang xảy ra lỗi!";
+
+            return;
+        }
+
+
+        // =====================================
+        // LỖI KHÁC
+        // =====================================
+
+        const errorText = await response.text();
+
         errorDiv.style.display = "block";
-        errorDiv.textContent = "Không thể kết nối server!";
+
+        errorDiv.textContent =
+            errorText ||
+            `Đăng nhập thất bại! HTTP ${response.status}`;
+
+
+    } catch (error) {
+
+        console.error("Lỗi đăng nhập:", error);
+
+        errorDiv.style.display = "block";
+
+        errorDiv.textContent =
+            "Không thể kết nối server!";
     }
+
 });

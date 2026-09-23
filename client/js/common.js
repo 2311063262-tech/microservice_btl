@@ -26,14 +26,14 @@ function requireRole(...roles) {
     // Kiểm tra user có đăng nhập không
     if (!currentUser) {
         alert("Vui lòng đăng nhập để tiếp tục!");
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
         return;
     }
     
     // Kiểm tra role
     if (!roles.includes(currentUser.role)) {
         alert("Bạn không có quyền truy cập trang này!");
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
         return;
     }
 }
@@ -59,5 +59,5 @@ function getCurrentUser() {
  */
 function logout() {
     localStorage.removeItem("currentUser");
-    window.location.href = "../index.html";
+    window.location.href = "index.html";
 }
