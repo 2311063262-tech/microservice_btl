@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-labelledby="title desc">
+  <title id="title">Gym equipment</title>
+  <desc id="desc">Illustration of gym equipment</desc>
+  <rect width="640" height="420" rx="28" fill="#eef4e8"/>
+  <path d="M80 330h480" stroke="#24332f" stroke-width="14" stroke-linecap="round"/>
+  <path d="M160 300V125h38v175M442 300V125h38v175" fill="none" stroke="#5e98bf" stroke-width="16" stroke-linecap="round"/>
+  <path d="M178 145h282M220 190h198" stroke="#24332f" stroke-width="12" stroke-linecap="round"/>
+  <path d="M220 190v70h198v-70" fill="none" stroke="#e96b56" stroke-width="13" stroke-linejoin="round"/>
+  <circle cx="130" cy="330" r="34" fill="#d8ec74" stroke="#24332f" stroke-width="10"/>
+  <circle cx="510" cy="330" r="34" fill="#d8ec74" stroke="#24332f" stroke-width="10"/>
+  <text x="320" y="90" text-anchor="middle" fill="#24332f" font-family="Arial, sans-serif" font-size="28" font-weight="700">PULSE GYM</text>
+</svg>

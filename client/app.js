@@ -16,6 +16,11 @@ const initials = value => String(value || "?").split(" ").map(part => part[0]).j
 const formatMoney = value => value == null ? "--" : new Intl.NumberFormat("vi-VN").format(value) + " đ";
 const formatDate = date => new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(date).toUpperCase();
 const canManage = () => state.user?.role === "ADMIN";
+const imageUrl = value => {
+    if (!value) return "";
+    return /^https?:\/\//i.test(value) ? value : `${API_BASE.replace(/\/api2025$/, "")}${value}`;
+};
+const placeholderImageUrl = `${API_BASE.replace(/\/api2025$/, "")}/images/equipment-placeholder.svg`;
 const entityState = type => state[{ member: "members", package: "packages", trainer: "trainers", equipment: "equipment", class: "classes" }[type]] || [];
 const endpointFor = type => ({ member: "members", package: "packages", trainer: "trainers", equipment: "equipments", class: "classes" }[type]);
 
@@ -79,7 +84,7 @@ function renderAll() {
     document.getElementById("memberCount").textContent = state.members.length;
     document.getElementById("packageCount").textContent = state.packages.length;
     document.getElementById("trainerCount").textContent = state.trainers.length;
-    document.getElementById("equipmentCount").textContent = state.equipment.reduce((total, item) => total + Number(item.quantity || 0), 0);
+    document.getElementById("equipmentCount").textContent = state.equipment.length;
     document.getElementById("equipmentAlert").textContent = state.equipment.filter(item => item.status !== "OK").length;
     document.getElementById("healthyEquipmentCount").textContent = state.equipment.filter(item => item.status === "OK").length;
     document.getElementById("classCount").textContent = state.classes.length;
@@ -138,7 +143,7 @@ function renderEquipmentTable() {
     const query = document.getElementById("equipmentSearch").value.toLowerCase().trim();
     const filter = document.getElementById("equipmentFilter").value;
     const items = state.equipment.filter(item => (!query || String(item.name || "").toLowerCase().includes(query)) && (!filter || item.status === filter));
-    document.getElementById("equipmentTable").innerHTML = items.length ? items.map(item => `<tr><td>${escapeHtml(item.name || "Thiết bị #" + item.id)}</td><td>${escapeHtml(item.quantity || 0)}</td><td><span class="badge-status ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span></td><td>${item.imageUrl ? "Có ảnh" : "--"}</td><td>${actionMarkup("equipment", item.id)}</td></tr>`).join("") : '<tr><td colspan="5"><div class="empty-state">Không tìm thấy thiết bị phù hợp.</div></td></tr>';
+    document.getElementById("equipmentTable").innerHTML = items.length ? items.map(item => `<tr><td>${escapeHtml(item.name || "Thiết bị #" + item.id)}</td><td>${escapeHtml(item.quantity || 0)}</td><td><span class="badge-status ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span></td><td><div class="equipment-image"><img src="${escapeHtml(imageUrl(item.imageUrl) || placeholderImageUrl)}" alt="${escapeHtml(item.name || "Ảnh thiết bị")}" onerror="this.onerror=null;this.src='${placeholderImageUrl}'"></div></td><td>${actionMarkup("equipment", item.id)}</td></tr>`).join("") : '<tr><td colspan="5"><div class="empty-state">Không tìm thấy thiết bị phù hợp.</div></td></tr>';
 }
 
 function openDashboard(user = state.user) {
@@ -204,8 +209,9 @@ function openCreateModal(type) {
     const form = document.getElementById("entityForm");
     const configs = {
         member: { eyebrow: "MEMBERS / API POST", title: "Thêm hội viên mới", description: "Tạo tài khoản đăng nhập và hồ sơ hội viên liên kết.", endpoint: "/members", entityType: "member", fields: fieldMarkup("username", "Tên đăng nhập") + fieldMarkup("password", "Mật khẩu", "password") + fieldMarkup("fullName", "Họ và tên") + fieldMarkup("email", "Email", "email", false) + fieldMarkup("phone", "Số điện thoại", "tel", false) + fieldMarkup("dob", "Ngày sinh", "date", false) + fieldMarkup("gender", "Giới tính", "select", false, '<option value="">Chưa cập nhật</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option>') + fieldMarkup("address", "Địa chỉ", "text", false) + fieldMarkup("joinDate", "Ngày tham gia", "date", false) },
+        trainer: { eyebrow: "TRAINERS / API POST", title: "Thêm huấn luyện viên", description: "Tạo tài khoản đăng nhập và hồ sơ chuyên môn liên kết.", endpoint: "/trainers", entityType: "trainer", fields: fieldMarkup("username", "Tên đăng nhập") + fieldMarkup("password", "Mật khẩu", "password") + fieldMarkup("fullName", "Họ và tên") + fieldMarkup("email", "Email", "email", false) + fieldMarkup("phone", "Số điện thoại", "tel", false) + fieldMarkup("specialty", "Chuyên môn", "text", false) + fieldMarkup("experienceYears", "Số năm kinh nghiệm", "number", false) + fieldMarkup("salary", "Mức lương", "number", false) },
         package: { eyebrow: "PACKAGES / API POST", title: "Tạo gói tập mới", description: "Đưa một lựa chọn mới vào danh mục hội viên.", endpoint: "/packages", fields: fieldMarkup("name", "Tên gói") + fieldMarkup("price", "Giá bán (VNĐ)", "number") + fieldMarkup("durationMonths", "Thời hạn (tháng)", "number") + fieldMarkup("description", "Mô tả", "textarea", false) },
-        equipment: { eyebrow: "EQUIPMENT / API POST", title: "Ghi nhận thiết bị", description: "Cập nhật tài sản mới vào kho vận hành.", endpoint: "/equipments", fields: fieldMarkup("name", "Tên thiết bị") + fieldMarkup("quantity", "Số lượng", "number") + fieldMarkup("status", "Trạng thái", "select", true, '<option value="OK">Đang tốt</option><option value="REPAIRING">Đang sửa</option><option value="BROKEN">Hỏng</option>') },
+        equipment: { eyebrow: "EQUIPMENT / API POST", title: "Ghi nhận thiết bị", description: "Cập nhật tài sản mới vào kho vận hành.", endpoint: "/equipments", fields: fieldMarkup("name", "Tên thiết bị") + fieldMarkup("quantity", "Số lượng", "number") + fieldMarkup("status", "Trạng thái", "select", true, '<option value="OK">Đang tốt</option><option value="REPAIRING">Đang sửa</option><option value="BROKEN">Hỏng</option>') + fieldMarkup("image", "Ảnh thiết bị", "file", false) },
         class: { eyebrow: "CLASSES / API POST", title: "Tạo lớp học mới", description: "Tạo lịch lớp và phân công huấn luyện viên phụ trách.", endpoint: "/classes", entityType: "class", fields: fieldMarkup("name", "Tên lớp") + fieldMarkup("dayOfWeek", "Ngày trong tuần") + fieldMarkup("startTime", "Giờ bắt đầu", "time") + fieldMarkup("endTime", "Giờ kết thúc", "time") + fieldMarkup("maxCapacity", "Sức chứa", "number") + fieldMarkup("trainerId", "Huấn luyện viên", "select", true, state.trainers.map(trainer => `<option value="${trainer.id}">${escapeHtml(userName(trainer.user) || `HLV #${trainer.id}`)}</option>`).join("")) }
     };
     const config = configs[type];
@@ -229,7 +235,7 @@ function editFields(type) {
         member: fieldMarkup("dob", "Ngày sinh", "date", false) + fieldMarkup("gender", "Giới tính", "select", false, '<option value="">Chưa cập nhật</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option>') + fieldMarkup("address", "Địa chỉ", "text", false) + fieldMarkup("avatarUrl", "URL ảnh đại diện", "text", false) + fieldMarkup("joinDate", "Ngày tham gia", "date", false),
         package: fieldMarkup("name", "Tên gói") + fieldMarkup("price", "Giá bán (VNĐ)", "number") + fieldMarkup("durationMonths", "Thời hạn (tháng)", "number") + fieldMarkup("description", "Mô tả", "textarea", false),
         trainer: fieldMarkup("specialty", "Chuyên môn", "text", false) + fieldMarkup("experienceYears", "Số năm kinh nghiệm", "number", false) + fieldMarkup("salary", "Mức lương", "number", false),
-        equipment: fieldMarkup("name", "Tên thiết bị") + fieldMarkup("quantity", "Số lượng", "number") + fieldMarkup("status", "Trạng thái", "select", true, '<option value="OK">Đang tốt</option><option value="REPAIRING">Đang sửa</option><option value="BROKEN">Hỏng</option>'),
+        equipment: fieldMarkup("name", "Tên thiết bị") + fieldMarkup("quantity", "Số lượng", "number") + fieldMarkup("status", "Trạng thái", "select", true, '<option value="OK">Đang tốt</option><option value="REPAIRING">Đang sửa</option><option value="BROKEN">Hỏng</option>') + fieldMarkup("image", "Ảnh thiết bị", "file", false),
         class: fieldMarkup("name", "Tên lớp") + fieldMarkup("dayOfWeek", "Ngày trong tuần") + fieldMarkup("startTime", "Giờ bắt đầu", "time") + fieldMarkup("endTime", "Giờ kết thúc", "time") + fieldMarkup("maxCapacity", "Sức chứa", "number") + fieldMarkup("trainerId", "Huấn luyện viên", "select", true, state.trainers.map(trainer => `<option value="${trainer.id}">${escapeHtml(userName(trainer.user))}</option>`).join("")),
         class: fieldMarkup("name", "Tên lớp") + fieldMarkup("dayOfWeek", "Ngày trong tuần") + fieldMarkup("startTime", "Giờ bắt đầu", "time") + fieldMarkup("endTime", "Giờ kết thúc", "time") + fieldMarkup("maxCapacity", "Sức chứa", "number")
     };
@@ -311,6 +317,8 @@ async function submitEntity(event) {
     const errorBox = document.getElementById("modalError");
     errorBox.textContent = "";
     const payload = Object.fromEntries(new FormData(form).entries());
+    const imageFile = form.dataset.entityType === "equipment" ? form.elements.namedItem("image")?.files[0] : null;
+    delete payload.image;
     if (payload.price) payload.price = Number(payload.price);
     if (payload.durationMonths) payload.durationMonths = Number(payload.durationMonths);
     if (payload.quantity) payload.quantity = Number(payload.quantity);
@@ -330,6 +338,14 @@ async function submitEntity(event) {
             await loadData();
             return;
         }
+        if (form.dataset.entityType === "trainer" && form.dataset.method === "POST") {
+            const user = await request("/users?role=ADMIN", { method: "POST", body: JSON.stringify({ username: payload.username, password: payload.password, role: "TRAINER", fullName: payload.fullName, email: payload.email, phone: payload.phone }) });
+            await request("/trainers?role=ADMIN", { method: "POST", body: JSON.stringify({ user: { id: user.id }, specialty: payload.specialty || null, experienceYears: payload.experienceYears ? Number(payload.experienceYears) : null, salary: payload.salary ? Number(payload.salary) : null }) });
+            closeCreateModal();
+            showToast("Đã tạo tài khoản và hồ sơ huấn luyện viên.");
+            await loadData();
+            return;
+        }
         if (form.dataset.entityType === "class") {
             const classPayload = { name: payload.name, dayOfWeek: payload.dayOfWeek, startTime: payload.startTime, endTime: payload.endTime, maxCapacity: payload.maxCapacity ? Number(payload.maxCapacity) : null, trainer: { id: Number(payload.trainerId) } };
             if (form.dataset.method === "PUT") delete classPayload.trainer;
@@ -339,7 +355,13 @@ async function submitEntity(event) {
             await loadData();
             return;
         }
-        await request(`${form.dataset.endpoint}?role=${encodeURIComponent(state.user?.role || "ADMIN")}`, { method: form.dataset.method || "POST", body: JSON.stringify(payload) });
+        const saved = await request(`${form.dataset.endpoint}?role=${encodeURIComponent(state.user?.role || "ADMIN")}`, { method: form.dataset.method || "POST", body: JSON.stringify(payload) });
+        if (form.dataset.entityType === "equipment" && imageFile && saved?.id) {
+            const uploadData = new FormData();
+            uploadData.append("file", imageFile);
+            const uploadResponse = await fetch(`${API_BASE}/equipments/${saved.id}/upload-image?role=ADMIN`, { method: "POST", headers: { "X-API-KEY": API_KEY }, body: uploadData });
+            if (!uploadResponse.ok) throw new Error(await uploadResponse.text() || "Không thể tải ảnh thiết bị.");
+        }
         closeCreateModal();
         showToast("Đã lưu dữ liệu thành công.");
         await loadData();
@@ -368,6 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("mobileMenuBtn").addEventListener("click", () => document.querySelector(".sidebar").classList.toggle("open"));
     document.getElementById("logoutBtn").addEventListener("click", logout);
     document.getElementById("addPackageBtn").addEventListener("click", () => openCreateModal("package"));
+    document.getElementById("addTrainerBtn").addEventListener("click", () => openCreateModal("trainer"));
     document.getElementById("addEquipmentBtn").addEventListener("click", () => openCreateModal("equipment"));
     document.getElementById("addClassBtn").addEventListener("click", () => {
         if (canManage()) openCreateModal("class");

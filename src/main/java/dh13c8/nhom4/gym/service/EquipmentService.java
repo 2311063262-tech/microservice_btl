@@ -73,7 +73,9 @@ public class EquipmentService {
         equipment.setName(equipmentDetails.getName());
         equipment.setQuantity(equipmentDetails.getQuantity());
         equipment.setStatus(equipmentDetails.getStatus());
-        equipment.setImageUrl(equipmentDetails.getImageUrl());
+        if (equipmentDetails.getImageUrl() != null && !equipmentDetails.getImageUrl().isBlank()) {
+            equipment.setImageUrl(equipmentDetails.getImageUrl());
+        }
 
         return equipmentRepository.save(equipment);
     }
