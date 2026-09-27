@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -29,6 +30,10 @@ public class Member {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id")
+    private Trainer trainer;
 
     @Column(name = "dob")
     private LocalDate dob;
@@ -73,6 +78,14 @@ public class Member {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Trainer getTrainer() {
+        return trainer;
+    }
+
+    public void setTrainer(Trainer trainer) {
+        this.trainer = trainer;
     }
 
     public LocalDate getDob() {

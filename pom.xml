@@ -45,6 +45,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Test support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Spring Boot DevTools (optional, for hot reload) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

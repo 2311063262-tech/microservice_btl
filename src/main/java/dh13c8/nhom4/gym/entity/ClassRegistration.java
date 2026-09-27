@@ -2,8 +2,6 @@ package dh13c8.nhom4.gym.entity;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,12 +25,10 @@ public class ClassRegistration {
 
     @ManyToOne
     @JoinColumn(name = "member_id")
-    @JsonBackReference
     private Member member;
 
     @ManyToOne
     @JoinColumn(name = "class_session_id")
-    @JsonBackReference
     private ClassSession classSession;
 
     @Column(name = "registered_at")

@@ -2,8 +2,6 @@ package dh13c8.nhom4.gym.entity;
 
 import java.time.LocalDate;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,13 +28,11 @@ public class Registration {
     /** Nhiều đăng ký thuộc một hội viên. */
     @ManyToOne
     @JoinColumn(name = "member_id")
-    @JsonBackReference
     private Member member;
 
     /** package là keyword Java nên field đặt tên gymPackage, cột SQL vẫn là package_id. */
     @ManyToOne
     @JoinColumn(name = "package_id")
-    @JsonBackReference
     private GymPackage gymPackage;
 
     @Column(name = "start_date")

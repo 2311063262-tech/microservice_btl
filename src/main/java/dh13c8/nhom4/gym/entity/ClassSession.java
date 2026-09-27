@@ -2,8 +2,6 @@ package dh13c8.nhom4.gym.entity;
 
 import java.time.LocalTime;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,7 +29,6 @@ public class ClassSession {
     /** Nhiều buổi lớp do một HLV phụ trách. */
     @ManyToOne
     @JoinColumn(name = "trainer_id")
-    @JsonBackReference
     private Trainer trainer;
 
     @Column(name = "day_of_week", length = 10)

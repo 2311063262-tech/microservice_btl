@@ -8,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import dh13c8.nhom4.gym.entity.Member;
+import dh13c8.nhom4.gym.entity.Trainer;
 import dh13c8.nhom4.gym.entity.User;
 import dh13c8.nhom4.gym.entity.AccountStatus;
 import dh13c8.nhom4.gym.repository.MemberRepository;
+import dh13c8.nhom4.gym.repository.TrainerRepository;
 import dh13c8.nhom4.gym.repository.UserRepository;
 
 @Service
@@ -21,6 +23,9 @@ public class MemberService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TrainerRepository trainerRepository;
 
     @Autowired
     private UserService userService;
@@ -44,6 +49,18 @@ public class MemberService {
      */
     public Optional<Member> getMemberById(Long id) {
         return memberRepository.findById(id);
+    }
+
+    public Member assignTrainer(Long id, Long trainerId, String role) {
+        userService.checkRole(role, "ADMIN", "MEMBER");
+
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
+        Trainer trainer = trainerId == null ? null : trainerRepository.findById(trainerId)
+                .orElseThrow(() -> new IllegalArgumentException("Huấn luyện viên không tồn tại"));
+
+        member.setTrainer(trainer);
+        return memberRepository.save(member);
     }
 
     // ========== CRUD (chỉ ADMIN) ==========

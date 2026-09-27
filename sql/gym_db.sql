@@ -30,6 +30,7 @@ CREATE TABLE users (
 CREATE TABLE members (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT NOT NULL UNIQUE,
+    trainer_id BIGINT,
     dob DATE,
     gender ENUM('MALE', 'FEMALE'),
     address VARCHAR(255),
@@ -46,6 +47,9 @@ CREATE TABLE trainers (
     salary DOUBLE,
     CONSTRAINT fk_trainers_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+
+ALTER TABLE members
+    ADD CONSTRAINT fk_members_trainer FOREIGN KEY (trainer_id) REFERENCES trainers (id) ON DELETE SET NULL;
 
 CREATE TABLE gym_packages (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

@@ -34,13 +34,13 @@ public class RegistrationService {
     /**
      * Đăng ký gói tập cho thành viên.
      * 
-     * @param role      quyền người dùng (chỉ ADMIN)
+     * @param role      quyền người dùng (ADMIN hoặc MEMBER)
      * @param memberId  ID thành viên
      * @param packageId ID gói tập
      * @return Registration đã tạo
      */
     public Registration registerPackage(String role, Long memberId, Long packageId) {
-        userService.checkRole(role, "ADMIN");
+        userService.checkRole(role, "ADMIN", "MEMBER");
 
         // Kiểm tra member tồn tại
         Member member = memberRepository.findById(memberId)
@@ -50,9 +50,10 @@ public class RegistrationService {
         GymPackage gymPackage = gymPackageRepository.findById(packageId)
                 .orElseThrow(() -> new IllegalArgumentException("Package không tồn tại"));
 
-        // Kiểm tra member đang có gói còn hiệu lực
+        // Quy tắc chuẩn: nếu member đã có gói active thì không cho đăng ký gói mới
+        // cần gia hạn/đổi gói theo workflow riêng.
         if (registrationRepository.existsByMemberIdAndStatus(memberId, RegistrationStatus.ACTIVE)) {
-            throw new IllegalStateException("Thành viên đang có gói còn hiệu lực");
+            throw new IllegalStateException("Bạn đã có gói tập còn hiệu lực. Vui lòng gia hạn gói hiện tại khi hết hạn.");
         }
 
         // Tạo đăng ký mới
@@ -69,12 +70,12 @@ public class RegistrationService {
     /**
      * Gia hạn gói tập: chỉ gói EXPIRED hoặc CANCELLED được gia hạn.
      * 
-     * @param role           quyền người dùng (chỉ ADMIN)
+     * @param role           quyền người dùng (ADMIN hoặc MEMBER)
      * @param registrationId ID đăng ký
      * @return Registration đã gia hạn
      */
     public Registration renewPackage(String role, Long registrationId) {
-        userService.checkRole(role, "ADMIN");
+        userService.checkRole(role, "ADMIN", "MEMBER");
 
         Registration registration = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new IllegalArgumentException("Registration không tồn tại"));
@@ -97,12 +98,12 @@ public class RegistrationService {
     /**
      * Hủy đăng ký: chỉ gói ACTIVE có thể hủy.
      * 
-     * @param role quyền người dùng (chỉ ADMIN)
+     * @param role quyền người dùng (ADMIN hoặc MEMBER)
      * @param id   ID đăng ký
      * @return Registration đã hủy
      */
     public Registration cancelRegistration(String role, Long id) {
-        userService.checkRole(role, "ADMIN");
+        userService.checkRole(role, "ADMIN", "MEMBER");
 
         Registration registration = registrationRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Registration không tồn tại"));

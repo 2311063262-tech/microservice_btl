@@ -5,7 +5,9 @@ const state = {
     packages: [],
     trainers: [],
     equipment: [],
-    classes: []
+    classes: [],
+    memberRegistrations: [],
+    memberClassRegistrations: []
 };
 
 const roleNames = { ADMIN: "Quản trị viên", TRAINER: "Huấn luyện viên", MEMBER: "Hội viên" };
@@ -24,9 +26,216 @@ const placeholderImageUrl = `${API_BASE.replace(/\/api2025$/, "")}/images/equipm
 const entityState = type => state[{ member: "members", package: "packages", trainer: "trainers", equipment: "equipment", class: "classes" }[type]] || [];
 const endpointFor = type => ({ member: "members", package: "packages", trainer: "trainers", equipment: "equipments", class: "classes" }[type]);
 
-function actionMarkup(type, id) {
+function currentMemberInfo() {
+    if (!state.user || state.user.role !== "MEMBER") return null;
+    return state.members.find(item => String(item.user?.id ?? item.userId ?? item.user_id) === String(state.user.id)) || null;
+}
+
+function currentActiveRegistration() {
+    const member = currentMemberInfo();
+    if (!member || !state.user || state.user.role !== "MEMBER") return null;
+    return state.memberRegistrations.find(item => String(item.member?.id ?? item.memberId) === String(member.id) && item.status === "ACTIVE") || null;
+}
+
+async function cancelCurrentPackageForMember() {
+    const activeRegistration = currentActiveRegistration();
+    const member = currentMemberInfo();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi hủy gói.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được hủy gói tập.");
+        return;
+    }
+    if (!member || !activeRegistration) {
+        showToast("Bạn hiện không có gói tập đang hiệu lực để hủy.");
+        return;
+    }
+    if (!window.confirm(`Bạn muốn hủy gói ${activeRegistration.gymPackage?.name || "hiện tại"} để đổi sang gói mới?`)) return;
+    try {
+        await request(`/registrations/${activeRegistration.id}/cancel?role=${encodeURIComponent(state.user.role)}`, { method: "POST" });
+        showToast("Đã hủy gói hiện tại.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể hủy gói: ${error.message}`);
+    }
+}
+
+async function switchPackageForCurrentMember(packageId) {
+    const member = currentMemberInfo();
+    const activeRegistration = currentActiveRegistration();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi đổi gói.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được đổi gói tập.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên. Vui lòng liên hệ quản trị viên.");
+        return;
+    }
+    if (!activeRegistration) {
+        await registerPackageForCurrentMember(packageId);
+        return;
+    }
+    if (!window.confirm(`Bạn đang có gói ${activeRegistration.gymPackage?.name || "hiện tại"}. Hủy gói cũ và đăng ký gói mới ngay?`)) return;
+    try {
+        await request(`/registrations/${activeRegistration.id}/cancel?role=${encodeURIComponent(state.user.role)}`, { method: "POST" });
+        await request(`/registrations?role=${encodeURIComponent(state.user.role)}&memberId=${member.id}&packageId=${packageId}`, { method: "POST" });
+        showToast("Đã hủy gói cũ và đăng ký gói mới thành công.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể chuyển đổi gói: ${error.message}`);
+    }
+}
+
+async function registerPackageForCurrentMember(packageId) {
+    const member = currentMemberInfo();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi đăng ký.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được đăng ký gói tập.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên. Vui lòng liên hệ quản trị viên.");
+        return;
+    }
+    const hasActivePackage = state.memberRegistrations && state.memberRegistrations.some(item => String(item.member?.id ?? item.memberId) === String(member.id) && item.status === "ACTIVE");
+    if (hasActivePackage) {
+        showToast("Bạn đã có gói tập còn hiệu lực. Vui lòng gia hạn khi gói hết hạn.");
+        return;
+    }
+    try {
+        await request(`/registrations?role=${encodeURIComponent(state.user.role)}&memberId=${member.id}&packageId=${packageId}`, { method: "POST" });
+        showToast("Đăng ký gói tập thành công.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể đăng ký gói tập: ${error.message}`);
+    }
+}
+
+async function cancelClassRegistrationForCurrentMember(classId) {
+    const member = currentMemberInfo();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi hủy đăng ký lớp.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được hủy đăng ký lớp học.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên. Vui lòng liên hệ quản trị viên.");
+        return;
+    }
+    const currentRegistration = state.memberClassRegistrations.find(item => String(item.member?.id ?? item.memberId) === String(member.id) && String(item.classSession?.id ?? item.classSessionId) === String(classId));
+    if (!currentRegistration) {
+        showToast("Bạn chưa đăng ký lớp này.");
+        return;
+    }
+    if (!window.confirm("Bạn muốn hủy đăng ký lớp này trước khi đăng ký lớp khác?")) return;
+    try {
+        await request(`/classes/${classId}/members/${member.id}?role=${encodeURIComponent(state.user.role)}`, { method: "DELETE" });
+        showToast("Đã hủy đăng ký lớp học.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể hủy đăng ký lớp: ${error.message}`);
+    }
+}
+
+async function switchClassRegistrationForCurrentMember(classId) {
+    const member = currentMemberInfo();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi đổi lớp.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được đổi lớp học.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên. Vui lòng liên hệ quản trị viên.");
+        return;
+    }
+    const currentRegistration = state.memberClassRegistrations.find(item => String(item.member?.id ?? item.memberId) === String(member.id));
+    if (!currentRegistration) {
+        await registerClassForCurrentMember(classId);
+        return;
+    }
+    if (String(currentRegistration.classSession?.id ?? currentRegistration.classSessionId) === String(classId)) {
+        showToast("Bạn đã đăng ký lớp này rồi.");
+        return;
+    }
+    if (!window.confirm(`Bạn đang có lớp ${currentRegistration.classSession?.name || "đã đăng ký"}. Hủy đăng ký lớp cũ và chuyển sang lớp mới ngay?`)) return;
+    try {
+        await request(`/classes/${currentRegistration.classSession?.id ?? currentRegistration.classSessionId}/members/${member.id}?role=${encodeURIComponent(state.user.role)}`, { method: "DELETE" });
+        await request(`/classes/${classId}/members?role=${encodeURIComponent(state.user.role)}&memberId=${member.id}`, { method: "POST" });
+        showToast("Đã hủy lớp cũ và đăng ký lớp mới thành công.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể đổi lớp: ${error.message}`);
+    }
+}
+
+async function registerClassForCurrentMember(classId) {
+    const member = currentMemberInfo();
+    if (!state.user) {
+        showToast("Vui lòng đăng nhập trước khi đăng ký.");
+        return;
+    }
+    if (state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được đăng ký lớp học.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên. Vui lòng liên hệ quản trị viên.");
+        return;
+    }
+    try {
+        await request(`/classes/${classId}/members?role=${encodeURIComponent(state.user.role)}&memberId=${member.id}`, { method: "POST" });
+        showToast("Đăng ký lớp học thành công.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể đăng ký lớp học: ${error.message}`);
+    }
+}
+
+async function selectTrainerForCurrentMember(trainerId) {
+    const member = currentMemberInfo();
+    if (!state.user || state.user.role !== "MEMBER") {
+        showToast("Chỉ hội viên mới được chọn huấn luyện viên.");
+        return;
+    }
+    if (!member) {
+        showToast("Tài khoản của bạn chưa có hồ sơ hội viên.");
+        return;
+    }
+    const currentTrainerId = member.trainer?.id ?? member.trainerId ?? null;
+    if (trainerId !== null && String(currentTrainerId) === String(trainerId)) {
+        showToast("Bạn đang chọn huấn luyện viên này.");
+        return;
+    }
+    if (!trainerId && !window.confirm("Bạn muốn bỏ chọn PT hiện tại?")) return;
+    if (trainerId && currentTrainerId && !window.confirm("Bạn muốn đổi sang huấn luyện viên này?")) return;
+    try {
+        const trainerQuery = trainerId ? `&trainerId=${trainerId}` : "";
+        await request(`/members/${member.id}/trainer?role=MEMBER${trainerQuery}`, { method: "PUT" });
+        showToast(trainerId ? "Đã chọn huấn luyện viên làm PT." : "Đã bỏ chọn PT.");
+        await loadData();
+    } catch (error) {
+        showToast(`Không thể chọn huấn luyện viên: ${error.message}`);
+    }
+}
+
+function actionMarkup(type, id, extra = "") {
     const editButton = `<button class="row-action edit-action" data-entity-action="edit" data-entity-type="${type}" data-entity-id="${id}" title="Sửa">Sửa</button>`;
-    return `<div class="card-actions"><button class="row-action" data-entity-action="view" data-entity-type="${type}" data-entity-id="${id}" title="Xem chi tiết">Xem</button>${canManage() ? `${editButton}<button class="row-action delete-action" data-entity-action="delete" data-entity-type="${type}" data-entity-id="${id}" title="Xóa">Xóa</button>` : ""}</div>`;
+    return `<div class="card-actions">${extra}<button class="row-action" data-entity-action="view" data-entity-type="${type}" data-entity-id="${id}" title="Xem chi tiết">Xem</button>${canManage() ? `${editButton}<button class="row-action delete-action" data-entity-action="delete" data-entity-type="${type}" data-entity-id="${id}" title="Xóa">Xóa</button>` : ""}</div>`;
 }
 
 function showToast(message) {
@@ -72,6 +281,28 @@ async function loadData() {
     state.trainers = trainersResult.status === "fulfilled" ? trainersResult.value : [];
     state.equipment = equipmentResult.status === "fulfilled" ? unwrapPage(equipmentResult.value) : [];
     state.classes = classesResult.status === "fulfilled" ? classesResult.value : [];
+    state.memberRegistrations = [];
+    state.memberClassRegistrations = [];
+    if (state.user?.role === "MEMBER") {
+        const member = currentMemberInfo();
+        if (member) {
+            try {
+                state.memberRegistrations = await request(`/registrations/member/${member.id}`);
+                const classRegistrations = await Promise.allSettled(
+                    state.classes.map(async classItem => {
+                        const classMembers = await request(`/classes/${classItem.id}/members`);
+                        return classMembers
+                            .filter(item => String(item.member?.id ?? item.memberId) === String(member.id))
+                            .map(item => ({ ...item, classSessionId: classItem.id, classSession: classItem }));
+                    })
+                );
+                state.memberClassRegistrations = classRegistrations.flatMap(result => result.status === "fulfilled" ? result.value : []);
+            } catch {
+                state.memberRegistrations = [];
+                state.memberClassRegistrations = [];
+            }
+        }
+    }
     if (canManage()) {
         try { state.inactiveMembers = unwrapPage(await request("/members/inactive?role=ADMIN&page=0&size=100")); } catch { state.inactiveMembers = []; }
     }
@@ -103,7 +334,23 @@ function renderClasses() {
 function renderClassBoard() {
     const board = document.getElementById("classBoard");
     if (!state.classes.length) { board.innerHTML = '<div class="panel empty-state">Chưa có lớp học trong lịch.</div>'; return; }
-    board.innerHTML = state.classes.map(item => `<div class="class-row"><span class="class-time">${escapeHtml(item.startTime || "--")}</span><span class="class-tag">${escapeHtml(initials(item.name))}</span><div class="class-info"><strong>${escapeHtml(item.name || "Lớp tập")}</strong><small>${escapeHtml(item.dayOfWeek || "Lịch chưa cập nhật")} · HLV đang phân công</small></div><span class="capacity">${item.maxCapacity || "--"} chỗ</span>${actionMarkup("class", item.id)}</div>`).join("");
+    const member = currentMemberInfo();
+    const memberRegisteredClassIds = member ? state.memberClassRegistrations
+        .filter(reg => String(reg.member?.id ?? reg.memberId) === String(member.id))
+        .map(reg => String(reg.classSession?.id ?? reg.classSessionId))
+        : [];
+    board.innerHTML = state.classes.map(item => {
+        const isRegistered = memberRegisteredClassIds.includes(String(item.id));
+        const hasOtherClass = member && memberRegisteredClassIds.some(id => id !== String(item.id));
+        const memberAction = state.user?.role === "MEMBER"
+            ? isRegistered
+                ? `<button class="row-action danger-btn" data-member-action="cancel-class" data-class-id="${item.id}">Hủy đăng ký</button>`
+                : hasOtherClass
+                    ? `<button class="row-action primary-action" data-member-action="switch-class" data-class-id="${item.id}">Chuyển lớp</button>`
+                    : `<button class="row-action primary-action" data-member-action="register-class" data-class-id="${item.id}">Đăng ký</button>`
+            : "";
+        return `<div class="class-row"><span class="class-time">${escapeHtml(item.startTime || "--")}</span><span class="class-tag">${escapeHtml(initials(item.name))}</span><div class="class-info"><strong>${escapeHtml(item.name || "Lớp tập")}</strong><small>${escapeHtml(item.dayOfWeek || "Lịch chưa cập nhật")} · HLV đang phân công</small></div><span class="capacity">${item.maxCapacity || "--"} chỗ</span>${memberAction}${actionMarkup("class", item.id)}</div>`;
+    }).join("");
 }
 
 function renderEquipmentSummary() {
@@ -132,11 +379,55 @@ function renderInactiveMembers() {
 }
 
 function renderPackages() {
-    document.getElementById("packageGrid").innerHTML = state.packages.length ? state.packages.map(item => `<article class="package-card"><p class="eyebrow">MEMBERSHIP PLAN</p><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "Gói tập linh hoạt cho hành trình khỏe mạnh hơn.")}</p><div class="package-price">${formatMoney(item.price)} <small>/ ${item.durationMonths || "--"} tháng</small></div><div class="card-meta"><span>Thời hạn</span><strong>${item.durationMonths || "--"} tháng</strong></div>${actionMarkup("package", item.id)}</article>`).join("") : '<div class="empty-state">Chưa có gói tập.</div>';
+    const member = currentMemberInfo();
+    const activeRegistration = member && state.memberRegistrations.length
+        ? state.memberRegistrations.find(item => String(item.member?.id ?? item.memberId) === String(member.id) && item.status === "ACTIVE")
+        : null;
+    const activePackageId = activeRegistration?.gymPackage?.id ?? null;
+    const activePackageName = activeRegistration?.gymPackage?.name || null;
+    const section = document.getElementById("packagesSection");
+    section?.querySelector(".member-package-banner")?.remove();
+
+    document.getElementById("packageGrid").innerHTML = state.packages.length ? state.packages.map(item => {
+        let memberAction = "";
+        if (state.user?.role === "MEMBER") {
+            if (activePackageId && String(item.id) === String(activePackageId)) {
+                memberAction = '<button class="row-action danger-btn" data-member-action="cancel-package">Hủy gói</button>';
+            } else if (activePackageId) {
+                memberAction = `<button class="row-action primary-action" data-member-action="switch-package" data-package-id="${item.id}">Chuyển đổi</button>`;
+            } else {
+                memberAction = `<button class="row-action primary-action" data-member-action="register-package" data-package-id="${item.id}">Đăng ký</button>`;
+            }
+        }
+        return `<article class="package-card"><p class="eyebrow">MEMBERSHIP PLAN</p><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "Gói tập linh hoạt cho hành trình khỏe mạnh hơn.")}</p><div class="package-price">${formatMoney(item.price)} <small>/ ${item.durationMonths || "--"} tháng</small></div><div class="card-meta"><span>Thời hạn</span><strong>${item.durationMonths || "--"} tháng</strong></div>${actionMarkup("package", item.id, memberAction)}</article>`;
+    }).join("") : '<div class="empty-state">Chưa có gói tập.</div>';
+
+    if (state.user?.role === "MEMBER" && activePackageName) {
+        const packageBanner = document.createElement("div");
+        packageBanner.className = "member-package-banner";
+        packageBanner.innerHTML = `Gói đang sử dụng: <strong>${escapeHtml(activePackageName)}</strong>`;
+        if (section) {
+            const heading = section.querySelector(".section-heading");
+            if (heading) {
+                heading.insertAdjacentElement("afterend", packageBanner);
+            } else {
+                section.prepend(packageBanner);
+            }
+        }
+    }
 }
 
 function renderTrainers() {
-    document.getElementById("trainerGrid").innerHTML = state.trainers.length ? state.trainers.map(item => `<article class="trainer-card"><span class="trainer-avatar">${escapeHtml(initials(userName(item.user)))}</span><div><h3>${escapeHtml(userName(item.user))}</h3><p>${escapeHtml(item.specialty || "Huấn luyện viên")}</p><small>${item.experienceYears || 0} năm kinh nghiệm</small>${actionMarkup("trainer", item.id)}</div></article>`).join("") : '<div class="empty-state">Chưa có huấn luyện viên.</div>';
+    const member = currentMemberInfo();
+    const selectedTrainerId = member?.trainer?.id ?? member?.trainerId ?? null;
+    document.getElementById("trainerGrid").innerHTML = state.trainers.length ? state.trainers.map(item => {
+        const memberAction = state.user?.role === "MEMBER"
+            ? String(selectedTrainerId) === String(item.id)
+                ? `<button class="row-action danger-btn" data-member-action="clear-trainer">Bỏ chọn PT</button>`
+                : `<button class="row-action primary-action" data-member-action="select-trainer" data-trainer-id="${item.id}">Chọn làm PT</button>`
+            : "";
+        return `<article class="trainer-card"><span class="trainer-avatar">${escapeHtml(initials(userName(item.user)))}</span><div><h3>${escapeHtml(userName(item.user))}</h3><p>${escapeHtml(item.specialty || "Huấn luyện viên")}</p><small>${item.experienceYears || 0} năm kinh nghiệm</small>${actionMarkup("trainer", item.id, memberAction)}</div></article>`;
+    }).join("") : '<div class="empty-state">Chưa có huấn luyện viên.</div>';
 }
 
 function renderEquipmentTable() {
@@ -162,12 +453,12 @@ function applyRoleAccess(role = "MEMBER") {
     const access = {
         ADMIN: ["overview", "members", "packages", "trainers", "equipment", "classes"],
         TRAINER: ["overview", "members", "classes"],
-        MEMBER: ["overview", "packages", "classes"]
+        MEMBER: ["overview", "packages", "trainers", "classes"]
     }[role] || ["overview", "classes"];
     document.getElementById("appView").className = `app-view role-${String(role).toLowerCase()}`;
     document.querySelectorAll(".nav-item").forEach(item => { item.classList.toggle("hidden", !access.includes(item.dataset.section)); });
     document.querySelectorAll(".page-section").forEach(section => { section.classList.toggle("role-hidden", !access.includes(section.id.replace("Section", ""))); });
-    const adminOnly = ["addMemberBtn", "addPackageBtn", "addTrainerBtn", "addEquipmentBtn", "addClassBtn", "quickPanel"];
+    const adminOnly = ["addMemberBtn", "addPackageBtn", "addTrainerBtn", "addEquipmentBtn", "addClassBtn", "inactiveMembersBtn", "quickPanel"];
     adminOnly.forEach(id => document.getElementById(id)?.classList.toggle("hidden", role !== "ADMIN"));
     const titles = {
         ADMIN: ["Giữ nhịp phòng tập,", "từng dữ liệu một.", "Dưới đây là bức tranh nhanh về Pulse Gym hôm nay."],
@@ -185,7 +476,7 @@ function switchSection(section) {
     const allowed = {
         ADMIN: ["overview", "members", "packages", "trainers", "equipment", "classes"],
         TRAINER: ["overview", "members", "classes"],
-        MEMBER: ["overview", "packages", "classes"]
+        MEMBER: ["overview", "packages", "trainers", "classes"]
     }[role] || ["overview", "classes"];
     if (!allowed.includes(section)) section = "overview";
     document.querySelectorAll(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.section === section));
@@ -302,6 +593,19 @@ async function restoreMember(id) {
 }
 
 function handleEntityAction(event) {
+    const memberActionButton = event.target.closest("[data-member-action]");
+    if (memberActionButton) {
+        const action = memberActionButton.dataset.memberAction;
+        if (action === "register-package") registerPackageForCurrentMember(Number(memberActionButton.dataset.packageId));
+        if (action === "switch-package") switchPackageForCurrentMember(Number(memberActionButton.dataset.packageId));
+        if (action === "cancel-package") cancelCurrentPackageForMember();
+        if (action === "register-class") registerClassForCurrentMember(Number(memberActionButton.dataset.classId));
+        if (action === "switch-class") switchClassRegistrationForCurrentMember(Number(memberActionButton.dataset.classId));
+        if (action === "cancel-class") cancelClassRegistrationForCurrentMember(Number(memberActionButton.dataset.classId));
+        if (action === "select-trainer") selectTrainerForCurrentMember(Number(memberActionButton.dataset.trainerId));
+        if (action === "clear-trainer") selectTrainerForCurrentMember(null);
+        return;
+    }
     const button = event.target.closest("[data-entity-action]");
     if (!button) return;
     const { entityAction, entityType, entityId } = button.dataset;
@@ -366,7 +670,9 @@ async function submitEntity(event) {
         showToast("Đã lưu dữ liệu thành công.");
         await loadData();
     } catch (error) {
-        errorBox.textContent = error.message || "Không thể lưu dữ liệu.";
+        errorBox.textContent = error.message === "Username đã tồn tại"
+            ? `Tên đăng nhập "${payload.username}" đã được sử dụng. Vui lòng nhập username khác.`
+            : error.message || "Không thể lưu dữ liệu.";
         showToast("Không thể tạo dữ liệu. Kiểm tra thông tin trong biểu mẫu.");
     }
 }

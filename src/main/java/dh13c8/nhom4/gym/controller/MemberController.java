@@ -70,6 +70,18 @@ public class MemberController {
         }
     }
 
+    @PutMapping("/{id}/trainer")
+    public ResponseEntity<?> assignTrainer(@PathVariable Long id, @RequestParam(required = false) Long trainerId,
+            @RequestParam String role) {
+        try {
+            return ResponseEntity.ok(memberService.assignTrainer(id, trainerId, role));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     /**
      * Tạo mới thành viên (chỉ ADMIN).
      */
