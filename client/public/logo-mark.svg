@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="GymFlow logo">
+  <rect width="128" height="128" fill="#111827"/>
+  <path d="M24 72c0-24 17-40 38-40 15 0 28 8 35 20l-13 8c-5-8-12-12-22-12-12 0-22 10-22 24s10 24 22 24c9 0 17-4 22-12l13 8c-7 12-20 20-35 20-21 0-38-16-38-40Z" fill="#B7F34A"/>
+  <path d="M28 70h16l9-18 12 37 10-19h25" fill="none" stroke="#F8FAFC" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
