@@ -47,9 +47,8 @@ export type AIChatBoxProps = {
    */
   height?: string | number;
 
-  /**
-   * Empty state message to display when no messages
-   */
+  
+   
   emptyStateMessage?: string;
 
   /**
